@@ -1,8 +1,21 @@
 # Airflow
 
+Activate Python virtual environment
+```bash
+source .venv/Scripts/activate
+```
+Deactivate Python virtual environments (or close the terminal)
+```bash
+deactivate
+```
+Install the Python modules defined in [requirements.txt](requirements.txt)
+```bash
+pip install -r requirements.txt
+```
+
 ## Docker
 
-Instructions on how to set up Airflow via Docker are derived from [Installation of Airflow® > Using Production Docker Images](https://airflow.apache.org/docs/apache-airflow/stable/installation/index.html#using-production-docker-images) > [Docker Image for Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html). The [docker-compose.yaml](/docker-compose.yaml) for this repository is derived from the [docker-compose.yaml](https://airflow.apache.org/docs/apache-airflow/3.1.8/docker-compose.yaml) that's referenced in the documentation.
+Instructions on how to set up Airflow via Docker are derived from [Installation of Airflow® > Using Production Docker Images](https://airflow.apache.org/docs/apache-airflow/stable/installation/index.html#using-production-docker-images) > [Docker Image for Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html).
 
 Note that for consistency with the [latest version of Amazon MWAA](https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-versions.html#airflow-versions-official) as of `2026-04-01`, we will be using version `3.0.6` of [DockerHub > apache/airflow](https://hub.docker.com/r/apache/airflow)
 ```bash
@@ -20,7 +33,7 @@ Note that `slim-3.0.6-python3.12` doesn't work with the `docker-compose.yaml`
         export AIRFLOW_IMAGE_NAME="apache/airflow:3.0.6-python3.12"
         export AIRFLOW_UID=50000
         ```
-2. Set up the Docker Compose cluster
+2. Set up the Docker Compose cluster via the [docker-compose.yaml](/docker-compose.yaml)  derived from the [docker-compose.yaml](https://airflow.apache.org/docs/apache-airflow/3.1.8/docker-compose.yaml) that's referenced in the documentation
     ```bash
     docker compose up -d
     ```
