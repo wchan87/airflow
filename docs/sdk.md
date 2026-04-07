@@ -43,7 +43,7 @@ All nested calls to functions decorated by [airflow.sdk.task](#airflowsdktask) w
 
 **Related Concept(s):** [Task](concepts.md#task)
 
-[airflow.sdk.task](https://airflow.apache.org/docs/task-sdk/1.0.6/api.html#airflow.sdk.task) is a decorator "to wrap Python callables as tasks and leverage [dynamic task mapping](concepts.md#dynamic-task-mapping) with the [.expand()](#airflowsdkbasedecorator_taskdecoratorexpand) method" and communicate through [airflow.sdk.XComArg](#airflowsdkxcomarg).
+[airflow.sdk.task](https://airflow.apache.org/docs/task-sdk/1.0.6/api.html#airflow.sdk.task) is a decorator "to wrap Python callables as tasks and leverage [dynamic task mapping](concepts.md#dynamic-task-mapping) with the [.expand()](#airflowsdkbasedecorator_taskdecoratorexpand) method" and communicate through [airflow.sdk.XComArg](#airflowsdkxcomarg). The decorator references `airfllow.sdk.base.decorators.TaskDecorator` underneath the covers so the associated methods like [expand()](#airflowsdkbasedecorator_taskdecoratorexpand) and [partial()](#airflowsdkbasedecorator_taskdecoratorpartial) are organized under this section.
 
 **Note:** The documentation mentions "[f]or traditional operators and sensors, import classes like [airflow.sdk.BaseOperator](#airflowsdkbaseoperator) or `airflow.sdk.Sensor`". There doesn't seem to be `airflow.sdk.Sensor` so it may be referring to [airflow.sdk.BaseSensorOperator](#airflowsdkbasesensoroperator) instead.
 
@@ -73,11 +73,11 @@ The underlying `partial()` method for a task decorator allows the static paramet
 
 ## airflow.sdk.BaseOperator
 
-[airflow.sdk.BaseOperator](https://airflow.apache.org/docs/task-sdk/1.0.6/api.html#airflow.sdk.BaseOperator) is the "[a]bstract base class for all operators" and "create objects that become nodes in the DAG".
+[airflow.sdk.BaseOperator](https://airflow.apache.org/docs/task-sdk/1.0.6/api.html#airflow.sdk.BaseOperator) is the "[a]bstract base class for all operators" and "create objects that become nodes in the DAG". Note that all [tasks](concepts.md#task) are subclasses of this abstract base class internally, but the documentation recommends thinking of task and operator as separate concepts. 
 
 ## airflow.sdk.BaseSensorOperator
 
-[airflow.sdk.BaseSensorOperator](https://airflow.apache.org/docs/task-sdk/1.0.6/api.html#airflow.sdk.BaseSensorOperator) is a class that "keep[s] executing at a time interval and succeed when a criteria is met and fail if and when they time out".
+[airflow.sdk.BaseSensorOperator](https://airflow.apache.org/docs/task-sdk/1.0.6/api.html#airflow.sdk.BaseSensorOperator) is a class that "keep[s] executing at a time interval and succeed when a criteria is met and fail if and when they time out". This class is a subclass of the [airflow.sdk.BaseOperator](#airflowsdkbaseoperator) and what the [sensors](concepts.md#sensors) are subclasses of.
 
 ## airflow.sdk.XComArg
 
