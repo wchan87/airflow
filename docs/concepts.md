@@ -14,6 +14,9 @@ From [Core Concepts > Dags](https://airflow.apache.org/docs/apache-airflow/3.0.6
 
 ### DAG Run
 
+From [Core Concepts > DAG Runs](https://airflow.apache.org/docs/apache-airflow/3.0.6/core-concepts/dag-run.html),
+> A DAG Run is an object representing an instantiation of the DAG in time. Any time the DAG is executed, a DAG Run is created and all tasks inside it are executed. The status of the DAG Run depends on the tasks states. Each DAG Run is run separately from one another, meaning that you can have many runs of a DAG at the same time.
+
 ### TaskGroup
 
 From [Core Concepts > Dags > TaskGroups](https://airflow.apache.org/docs/apache-airflow/3.0.6/core-concepts/dags.html#taskgroups)
@@ -79,6 +82,137 @@ From [Core Concepts > TaskFlow](https://airflow.apache.org/docs/apache-airflow/3
 > TaskFlow takes care of moving inputs and outputs between your Tasks using XComs for you, as well as automatically calculating dependencies - when you call a TaskFlow function in your DAG file, rather than executing it, you will get an object representing the XCom for the result (an XComArg), that you can then use as inputs to downstream tasks or operators.
 
 ### Task Instance
+
+From [Core Concepts > Tasks > Task Instances](https://airflow.apache.org/docs/apache-airflow/3.0.6/core-concepts/tasks.html#task-instances)
+> Much in the same way that a DAG is instantiated into a DAG Run each time it runs, the tasks under a DAG are instantiated into Task Instances.
+> 
+> An instance of a Task is a specific run of that task for a given DAG (and thus for a given data interval). They are also the representation of a Task that has state, representing what stage of the lifecycle it is in.
+> 
+> The possible states for a Task Instance are:
+> * `none`: The Task has not yet been queued for execution (its dependencies are not yet met)
+> * `scheduled`: The scheduler has determined the Task’s dependencies are met and it should run
+> * `queued`: The task has been assigned to an Executor and is awaiting a worker
+> * `running`: The task is running on a worker (or on a local/synchronous executor)
+> * `success`: The task finished running without errors
+> * `restarting`: The task was externally requested to restart when it was running
+> * `failed`: The task had an error during execution and failed to run
+> * `skipped`: The task was skipped due to branching, LatestOnly, or similar.
+> * `upstream_failed`: An upstream task failed and the Trigger Rule says we needed it
+> * `up_for_retry`: The task failed, but has retry attempts left and will be rescheduled.
+> * `up_for_reschedule`: The task is a [Sensor](#sensors) that is in `reschedule` mode
+> * `deferred`: The task has been deferred to a trigger
+> * `removed`: The task has vanished from the DAG since the run started
+
+The task instance state transition diagram from the documentation is simplified slightly below:
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    state none
+    state scheduled
+    state queued
+    state running
+    state success
+    state restarting
+    state failed
+    state skipped
+    state upstream_failed
+    state up_for_retry
+    state up_for_reschedule
+    state deferred
+    state removed
+
+    state is_required_upstream_tasks_failed <<choice>>
+    state is_task_should_be_skipped <<choice>>
+    state is_task_instance_still_available <<choice>>
+    state is_task_instance_got_restored <<choice>>
+    state is_triggerer_task <<choice>>
+    state is_triggerer_task_2 <<choice>>
+    state is_task_completes <<choice>>
+    state is_task_is_deferrable_and_defer_signal_is_raised <<choice>>
+    state is_skip_signal_is_raised <<choice>>
+    state is_task_is_a_sensor_in_reschedule_mode_and_result_is_undetermined <<choice>>
+    state is_task_marked_as_failed <<choice>>
+    state is_task_marked_as_cleared <<choice>>
+    state is_task_got_error <<choice>>
+    state is_task_completes_2 <<choice>>
+    state is_eligible_for_retry <<choice>>
+
+    [*] --> none
+    none --> is_required_upstream_tasks_failed: Required upstream task(s) failed?
+
+    is_required_upstream_tasks_failed --> is_task_should_be_skipped: YES, Task should be skipped?
+    is_required_upstream_tasks_failed --> upstream_failed: NO
+
+    is_task_should_be_skipped --> skipped: YES
+    is_task_should_be_skipped --> is_task_instance_still_available: NO, Task instance is still available?
+
+    is_task_instance_still_available --> scheduled: YES
+    is_task_instance_still_available --> removed: NO
+
+    removed --> is_task_instance_got_restored: Task instance got restored?
+    is_task_instance_got_restored --> none: YES
+    is_task_instance_got_restored --> removed: NO
+
+    scheduled --> queued
+    queued --> is_triggerer_task: A triggerer task? (can execute just only with triggerer)
+
+    is_triggerer_task --> deferred: YES
+    is_triggerer_task --> running: NO
+
+    deferred --> is_triggerer_task_2: A triggerer task?
+    is_triggerer_task_2 --> is_task_completes: YES, Task completes?
+    is_triggerer_task_2 --> is_required_upstream_tasks_failed: NO
+
+    is_task_completes --> is_task_is_deferrable_and_defer_signal_is_raised: YES, Task is deferrable and defer signal is raised?
+    is_task_completes --> deferred: NO
+    
+    is_task_is_deferrable_and_defer_signal_is_raised --> deferred: YES
+    is_task_is_deferrable_and_defer_signal_is_raised --> is_skip_signal_is_raised: NO, Skip signal is raised?
+
+    is_skip_signal_is_raised --> skipped: YES
+    is_skip_signal_is_raised --> is_task_is_a_sensor_in_reschedule_mode_and_result_is_undetermined: NO, Task is a sensor in reschedule mode, and result is undetermined?
+
+    is_task_is_a_sensor_in_reschedule_mode_and_result_is_undetermined --> up_for_reschedule: YES
+    up_for_reschedule --> is_required_upstream_tasks_failed
+    is_task_is_a_sensor_in_reschedule_mode_and_result_is_undetermined --> is_task_marked_as_failed: NO, Task marked as failed?
+
+    is_task_marked_as_failed --> failed: YES
+    is_task_marked_as_failed --> is_task_marked_as_cleared: NO, Task marked as cleared?
+
+    is_task_marked_as_cleared --> restarting: YES
+    restarting --> up_for_retry
+    is_task_marked_as_cleared --> is_task_got_error: NO, Task got error?
+
+    is_task_got_error --> is_eligible_for_retry: YES, Eligible for retry?
+    is_task_got_error --> is_task_completes_2: NO, Task completes?
+
+    is_eligible_for_retry --> up_for_retry: YES
+    up_for_retry --> is_required_upstream_tasks_failed
+    is_eligible_for_retry --> failed: NO
+
+    is_task_completes_2 --> success: YES
+    is_task_completes_2 --> running: NO
+    running --> is_task_is_deferrable_and_defer_signal_is_raised
+
+    upstream_failed --> [*]
+    removed --> [*]
+    skipped --> [*]
+    failed --> [*]
+    success --> [*]
+
+    classDef stateForDeferrableTasks fill:pink
+    classDef stateForSensors fill:yellow
+    classDef terminalState fill:lightgreen
+    class deferred stateForDeferrableTasks
+    class up_for_reschedule stateForSensors
+    class upstream_failed, removed, skipped, failed, success terminalState
+```
+
+## Executor
+
+From [Core Concepts > Executor](https://airflow.apache.org/docs/apache-airflow/3.0.6/core-concepts/executor/index.html),
+> Executors are the mechanism by which [task instances](#task-instance) get run. They have a common API and are "pluggable", meaning you can swap executors based on your installation needs.
 
 ## Asset
 

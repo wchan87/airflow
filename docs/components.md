@@ -46,7 +46,8 @@ flowchart LR
 
 ## Scheduler
 
-## Executor
+From [Administration and Deployment > Scheduler](https://airflow.apache.org/docs/apache-airflow/3.0.6/administration-and-deployment/scheduler.html),
+> The Airflow scheduler monitors all tasks and dags, then triggers the [task instances](concepts.md#task-instance) once their dependencies are complete. Behind the scenes, the scheduler spins up a subprocess, which monitors and stays in sync with all dags in the specified DAG directory. Once per minute, by default, the scheduler collects DAG parsing results and checks whether any active tasks can be triggered.
 
 ## Worker
 
@@ -70,3 +71,21 @@ As summarized in [Supervisor & Task Runner](https://airflow.apache.org/docs/task
 > * Executes the Python function or operator code in isolation.
 > * Emits logs through STDOUT and communicates runtime events (heartbeats, XCom messages) via the Supervisor.
 > * Performs final state transitions by sending authenticated API calls through the Supervisor.
+
+## Triggerer
+
+From [Authoring and Scheduling > Deferrable Operators & Triggers](https://airflow.apache.org/docs/apache-airflow/3.0.6/authoring-and-scheduling/deferring.html),
+> This is where Deferrable Operators can be used. When it has nothing to do but wait, an operator can suspend itself and free up the worker for other processes by deferring. When an operator defers, execution moves to the triggerer, where the trigger specified by the operator will run. The trigger can do the polling or waiting required by the operator. Then, when the trigger finishes polling or waiting, it sends a signal for the operator to resume its execution. During the deferred phase of execution, since work has been offloaded to the triggerer, the task no longer occupies a worker slot, and you have more free workload capacity. By default, tasks in a deferred state don’t occupy pool slots. If you would like them to, you can change this by editing the pool in question.
+
+The triggerer appears to be a special type of [worker](#worker) used to handle triggers that deferrable operators wait for.
+
+## DAG Processor
+
+From [Administration and Deployment > DAG File Processing](https://airflow.apache.org/docs/apache-airflow/3.0.6/administration-and-deployment/dagfile-processing.html),
+> DAG File Processing refers to the process of reading the python files that define your dags and storing them such that the scheduler can schedule them.
+> 
+> There are two primary components involved in DAG file processing. The `DagFileProcessorManager` is a process executing an infinite loop that determines which files need to be processed, and the `DagFileProcessorProcess` is a separate process that is started to convert an individual file into one or more DAG objects.
+
+## Webserver
+
+From the documentation, the webserver primarily refers to the [Airflow UI](https://airflow.apache.org/docs/apache-airflow/3.0.6/ui.html), but it can sometimes encapsulate the [Airflow REST API](https://airflow.apache.org/docs/apache-airflow/3.0.6/stable-rest-api-ref.html) as well.
